@@ -1,0 +1,2 @@
+# ray.rs
+man-ray
