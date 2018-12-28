@@ -1,6 +1,6 @@
 use std::io;
 
-use ray::camera::Camera;
+use ray::camera::{Camera, write_image};
 use ray::material::{Lambertian, Metal, Dialectic, Material};
 use ray::collision::Collidable;
 use ray::shape::Sphere;
@@ -9,9 +9,10 @@ use rand::rngs::SmallRng;
 use rand::prelude::*;
 use ray::vector::Vector;
 use ray::world::World;
+use itertools::iproduct;
 
 fn main() -> io::Result<()> {
-    let n = 300;
+    let n = 10;
     let ns = (n as f64).sqrt() as isize;
     let mut objects: Vec<Box<dyn Collidable>> = Vec::with_capacity(n);
 
@@ -49,30 +50,28 @@ fn main() -> io::Result<()> {
     objects.push(metal);
 
     let mut rng = SmallRng::from_rng(thread_rng())?;
-    for i in -ns..ns {
-        for e in -ns..ns {
-            let choose_mat = rng.gen::<f64>();
-            let center = Vector::new(i as f64 + 0.9 + rng.gen::<f64>(), 0.2, e as f64 + 0.9 * rng.gen::<f64>());
-            let material: Box<dyn Material> = if (center - Vector::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                Box::new(Lambertian::new(Vector::new(
-                    rng.gen::<f64>() * rng.gen::<f64>(),
-                    rng.gen::<f64>() * rng.gen::<f64>(),
-                    rng.gen::<f64>() * rng.gen::<f64>(),
-                )))
-            } else if choose_mat < 0.95 {
-                Box::new(Metal::new(
-                    Vector::new(
-                        0.5 * (1.0 + rng.gen::<f64>()),
-                        0.5 * (1.0 + rng.gen::<f64>()),
-                        0.5 * (1.0 + rng.gen::<f64>()),
-                    ),
-                    0.5 * rng.gen::<f64>(),
-                ))
-            } else {
-                Box::new(Dialectic::new(1.5))
-            };
-            objects.push(Box::new(Sphere::new(center, 0.2, material)));
-        }
+    for (i, e) in iproduct!(-ns..ns, -ns..ns) {
+        let choose_mat = rng.gen::<f64>();
+        let center = Vector::new(i as f64 + 0.9 + rng.gen::<f64>(), 0.2, e as f64 + 0.9 * rng.gen::<f64>());
+        let material: Box<dyn Material> = if (center - Vector::new(4.0, 0.2, 0.0)).length() > 0.9 {
+            Box::new(Lambertian::new(Vector::new(
+                rng.gen::<f64>() * rng.gen::<f64>(),
+                rng.gen::<f64>() * rng.gen::<f64>(),
+                rng.gen::<f64>() * rng.gen::<f64>(),
+            )))
+        } else if choose_mat < 0.95 {
+            Box::new(Metal::new(
+                Vector::new(
+                    0.5 * (1.0 + rng.gen::<f64>()),
+                    0.5 * (1.0 + rng.gen::<f64>()),
+                    0.5 * (1.0 + rng.gen::<f64>()),
+                ),
+                0.5 * rng.gen::<f64>(),
+            ))
+        } else {
+            Box::new(Dialectic::new(1.5))
+        };
+        objects.push(Box::new(Sphere::new(center, 0.2, material)));
     }
 
     let origin = Vector::new(8.0, 2.0, 3.0);
@@ -83,6 +82,8 @@ fn main() -> io::Result<()> {
     let apurture = 0.0;
     let camera = Camera::new(origin, target, vup, field_of_view, aspect_ratio, apurture);
     let world = World::new(objects);
-    camera.render(&world, 1200, "example.ppm", &mut rng)?;
+
+    let scale = 300;
+    write_image(camera.render(&world, scale, &mut rng), aspect_ratio, scale, "example.ppm")?;
     Ok(())
 }

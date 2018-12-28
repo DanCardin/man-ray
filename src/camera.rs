@@ -1,5 +1,7 @@
 use std::fs::File;
 use std::f64;
+use rayon::prelude::*;
+use itertools::iproduct;
 use std::path::Path;
 use std::io;
 use std::io::{BufWriter, Write};
@@ -88,20 +90,17 @@ impl Camera {
         )
     }
 
-    pub fn render(self: &Self, world: &World, scale: usize, filename: &str, mut rng: &mut SmallRng) -> io::Result<()> {
-        let f = File::create(Path::new(filename)).expect("Unable to open file");
-        let mut f = BufWriter::new(f);
-
+    pub fn render(self: &Self, world: &World, scale: usize, mut rng: &mut SmallRng) -> Vec<Color> {
         let width = scale;
         let height = (scale as f64 / self.aspect) as usize;
         println!("{}, {}", height, width);
 
         let sub_pixels = 100;
+
         let mut pixels: Vec<Color> = Vec::with_capacity(width * height);
-        for i in 0..height {
-            for e in 0..width {
-                let mut colors = Vec::new();
-                for _ in 0..sub_pixels {
+        for (i, e) in iproduct!(0..height, 0..width) {
+            let color: Color = (0..sub_pixels)
+                .map(|_| {
                     let u_rand: f64 = rng.gen();
                     let u = (e as f64 + u_rand) / width as f64;
 
@@ -109,34 +108,42 @@ impl Camera {
                     let v = (((height as f64) - (i as f64)) + v_rand) / (height as f64);
                     let ray = self.get_ray(u, v, &mut rng);
 
-                    let color = calc_color(world, ray, 0, &mut rng);
-                    colors.push(color);
-                }
-                pixels.push(Color::gamma_correct(Color::antialias(colors.as_ref())));
-            }
+                    calc_color(world, ray, 0, &mut rng)
+                })
+                .sum();
+            pixels.push((color / sub_pixels).gamma_correct());
         }
-
-        f.write("P3\n".as_bytes())?;
-        f.write(format!("{} {}\n", width, height).as_bytes())?;
-        f.write(format!("{}\n", 255).as_bytes())?;
-
-        for row in pixels.chunks(width) {
-            for pixel in row {
-                let camera_color = CameraColor::from_color(*pixel);
-                f.write(
-                    format!(
-                        "{} {} {}\n",
-                        camera_color.red,
-                        camera_color.green,
-                        camera_color.blue,
-                        )
-                    .as_bytes()
-                )?;
-            }
-            f.write("\n".as_bytes())?;
-        }
-        Ok(())
+        pixels
     }
+}
+
+pub fn write_image(pixels: Vec<Color>, aspect: f64, scale: usize, filename: &str) -> io::Result<()> {
+    let width = scale;
+    let height = (scale as f64 / aspect) as usize;
+
+    let f = File::create(Path::new(filename)).expect("Unable to open file");
+    let mut f = BufWriter::new(f);
+
+    f.write("P3\n".as_bytes())?;
+    f.write(format!("{} {}\n", width, height).as_bytes())?;
+    f.write(format!("{}\n", 255).as_bytes())?;
+
+    for row in pixels.chunks(width) {
+        for pixel in row {
+            let camera_color = CameraColor::from_color(*pixel);
+            f.write(
+                format!(
+                    "{} {} {}\n",
+                    camera_color.red,
+                    camera_color.green,
+                    camera_color.blue,
+                    )
+                .as_bytes()
+            )?;
+        }
+        f.write("\n".as_bytes())?;
+    }
+    Ok(())
 }
 
 fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color {
