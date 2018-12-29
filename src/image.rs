@@ -27,6 +27,5 @@ pub fn write_image(pixels: &[Color], aspect: f64, scale: usize, filename: &str) 
             img.put_pixel(x as u32, y as u32, pixel.into());
         }
     }
-    img.save(Path::new(filename))?;
-    Ok(())
+    img.save(Path::new(filename))
 }

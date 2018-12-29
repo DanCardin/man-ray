@@ -68,10 +68,9 @@ impl Camera {
         )
     }
 
-    pub fn render(self: &Self, world: &World, scale: usize, mut rng: &mut SmallRng) -> Vec<Color> {
+    pub fn render(self: &Self, world: &World, scale: usize, rng: &mut SmallRng) -> Vec<Color> {
         let width = scale;
         let height = (scale as f64 / self.aspect) as usize;
-        println!("{}, {}", height, width);
 
         let sub_pixels = 100;
 
@@ -84,9 +83,9 @@ impl Camera {
 
                     let v_rand: f64 = rng.gen();
                     let v = (((height as f64) - (i as f64)) + v_rand) / (height as f64);
-                    let ray = self.get_ray(u, v, &mut rng);
+                    let ray = self.get_ray(u, v, rng);
 
-                    calc_color(world, ray, 0, &mut rng)
+                    calc_color(world, ray, 0, rng)
                 })
                 .sum();
             pixels.push((color / sub_pixels).gamma_correct());
