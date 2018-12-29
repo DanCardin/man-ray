@@ -1,0 +1,41 @@
+sudo: required
+dist: trusty
+addons:
+  apt:
+    packages:
+      - libssl-dev
+language: rust
+rust:
+  - stable
+  - beta
+  - nightly
+cache: cargo
+
+before_cache: |
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
+  fi
+
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+before_script: |
+  rustup component add rustfmt
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    rustup component add clippy --toolchain=nightly || cargo install --git https://github.com/rust-lang/rust-clippy/ --force clippy
+  else
+    rustup component add clippy
+  fi
+
+script:
+- make clean
+- make lint
+- make build
+- make test
+
+after_success: |
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
+  fi
