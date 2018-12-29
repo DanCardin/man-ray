@@ -1,38 +1,12 @@
-use std::fs::File;
 use std::f64;
-use rayon::prelude::*;
 use itertools::iproduct;
-use std::path::Path;
-use std::io;
-use std::io::{BufWriter, Write};
-use rand::prelude::*;
 use rand::rngs::SmallRng;
+use rand::prelude::*;
 
 use crate::color::Color;
 use crate::vector::Vector;
 use crate::world::World;
 use crate::ray::Ray;
-
-
-#[derive(Clone, Copy, Debug)]
-pub struct CameraColor {
-    pub red: u8,
-    pub blue: u8,
-    pub green: u8,
-}
-
-
-impl CameraColor {
-    pub fn from_color(color: Color) -> CameraColor {
-        CameraColor {
-            red: (color.red * 255.99) as u8,
-            green: (color.green * 255.99) as u8,
-            blue: (color.blue * 255.99) as u8,
-        }
-    }
-
-}
-
 
 
 pub struct Camera {
@@ -115,35 +89,6 @@ impl Camera {
         }
         pixels
     }
-}
-
-pub fn write_image(pixels: Vec<Color>, aspect: f64, scale: usize, filename: &str) -> io::Result<()> {
-    let width = scale;
-    let height = (scale as f64 / aspect) as usize;
-
-    let f = File::create(Path::new(filename)).expect("Unable to open file");
-    let mut f = BufWriter::new(f);
-
-    f.write("P3\n".as_bytes())?;
-    f.write(format!("{} {}\n", width, height).as_bytes())?;
-    f.write(format!("{}\n", 255).as_bytes())?;
-
-    for row in pixels.chunks(width) {
-        for pixel in row {
-            let camera_color = CameraColor::from_color(*pixel);
-            f.write(
-                format!(
-                    "{} {} {}\n",
-                    camera_color.red,
-                    camera_color.green,
-                    camera_color.blue,
-                    )
-                .as_bytes()
-            )?;
-        }
-        f.write("\n".as_bytes())?;
-    }
-    Ok(())
 }
 
 fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color {

@@ -1,6 +1,7 @@
 use std::io;
 
-use ray::camera::{Camera, write_image};
+use ray::camera::Camera;
+use ray::image::write_image;
 use ray::material::{Lambertian, Metal, Dialectic, Material};
 use ray::collision::Collidable;
 use ray::shape::Sphere;
@@ -84,6 +85,6 @@ fn main() -> io::Result<()> {
     let world = World::new(objects);
 
     let scale = 300;
-    write_image(camera.render(&world, scale, &mut rng), aspect_ratio, scale, "example.ppm")?;
+    write_image(camera.render(&world, scale, &mut rng), aspect_ratio, scale, "example.png")?;
     Ok(())
 }
