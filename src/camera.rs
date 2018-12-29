@@ -7,6 +7,7 @@ use crate::color::Color;
 use crate::ray::Ray;
 use crate::vector::Vector;
 use crate::world::World;
+use rayon::prelude::*;
 
 pub struct Camera {
     origin: Vector,
@@ -68,46 +69,50 @@ impl Camera {
         )
     }
 
-    pub fn render(self: &Self, world: &World, scale: usize, rng: &mut SmallRng) -> Vec<Color> {
+    pub fn render(self: &Self, world: &World, scale: usize) -> Vec<Color> {
         let width = scale;
         let height = (scale as f64 / self.aspect) as usize;
+        println!("{} {}", width, height);
 
-        let sub_pixels = 100;
+        let sub_pixels = 5;
 
-        let mut pixels: Vec<Color> = Vec::with_capacity(width * height);
-        for (i, e) in iproduct!(0..height, 0..width) {
-            let color: Color = (0..sub_pixels)
-                .map(|_| {
-                    let u_rand: f64 = rng.gen();
-                    let u = (e as f64 + u_rand) / width as f64;
+        iproduct!(0..height, 0..width)
+            .collect::<Vec<(usize, usize)>>()
+            .par_iter()
+            .map(|(i, e)| {
+                let i = *i;
+                let e = *e;
+                let mut rng = SmallRng::from_rng(thread_rng()).expect("couldn't get randomness");
+                let color: Color = (0..sub_pixels)
+                    .map(|_| {
+                        let u_rand: f64 = rng.gen();
+                        let u = (e as f64 + u_rand) / width as f64;
 
-                    let v_rand: f64 = rng.gen();
-                    let v = (((height as f64) - (i as f64)) + v_rand) / (height as f64);
-                    let ray = self.get_ray(u, v, rng);
-
-                    calc_color(world, ray, 0, rng)
-                })
-                .sum();
-            pixels.push((color / sub_pixels).gamma_correct());
-        }
-        pixels
+                        let v_rand: f64 = rng.gen();
+                        let v = (((height as f64) - (i as f64)) + v_rand) / (height as f64);
+                        let ray = self.get_ray(u, v, &mut rng);
+                        calc_color(world, ray, 0, &mut rng)
+                    })
+                    .sum();
+                (color / sub_pixels).gamma_correct()
+            })
+            .collect()
     }
 }
 
 fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color {
-    if let Some(collision) = world.check_collision(ray, 0.001, f64::MAX) {
-        if depth < 50 {
-            match collision.material.scatter(ray, collision, rng) {
-                Some(effect) => {
-                    calc_color(world, effect.scatter, depth + 1, rng) * effect.attenuation
-                }
-                None => Color::default(),
-            }
-        } else {
-            Color::default()
+    let collision = match world.check_collision(ray, 0.001, f64::MAX) {
+        Some(collision) => collision,
+        None => return background(ray),
+    };
+
+    if depth < 50 {
+        match collision.material.scatter(ray, collision, rng) {
+            Some(effect) => calc_color(world, effect.scatter, depth + 1, rng) * effect.attenuation,
+            None => Color::default(),
         }
     } else {
-        background(ray)
+        Color::default()
     }
 }
 

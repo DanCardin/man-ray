@@ -4,8 +4,10 @@ use crate::ray::Ray;
 use crate::vector::Vector;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
+use std::marker::Sync;
 
-pub trait Material {
+pub trait Material: Sync {
+    fn name(&self) -> String;
     fn scatter(
         self: &Self,
         ray: Ray,
@@ -52,6 +54,9 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
+    fn name(&self) -> String {
+        "lamb".to_string()
+    }
     fn scatter(
         self: &Self,
         _ray: Ray,
@@ -80,6 +85,9 @@ impl Metal {
 }
 
 impl Material for Metal {
+    fn name(&self) -> String {
+        "metal".to_string()
+    }
     fn scatter(
         self: &Self,
         ray: Ray,
@@ -114,6 +122,9 @@ impl Dialectic {
 }
 
 impl Material for Dialectic {
+    fn name(&self) -> String {
+        "dial".to_string()
+    }
     fn scatter(
         self: &Self,
         ray: Ray,
