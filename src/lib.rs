@@ -1,6 +1,6 @@
 pub mod camera;
-pub mod color;
 pub mod collision;
+pub mod color;
 pub mod image;
 pub mod material;
 pub mod ray;

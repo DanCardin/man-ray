@@ -1,50 +1,42 @@
 use std::io;
 
-use ray::camera::Camera;
-use ray::image::write_image;
-use ray::material::{Lambertian, Metal, Dialectic, Material};
-use ray::collision::Collidable;
-use ray::shape::Sphere;
-use rand::thread_rng;
-use rand::rngs::SmallRng;
+use itertools::iproduct;
 use rand::prelude::*;
+use rand::rngs::SmallRng;
+use rand::thread_rng;
+use ray::camera::Camera;
+use ray::collision::Collidable;
+use ray::image::write_image;
+use ray::material::{Dialectic, Lambertian, Material, Metal};
+use ray::shape::Sphere;
 use ray::vector::Vector;
 use ray::world::World;
-use itertools::iproduct;
 
 fn main() -> io::Result<()> {
     let n = 10;
     let ns = (n as f64).sqrt() as isize;
     let mut objects: Vec<Box<dyn Collidable>> = Vec::with_capacity(n);
 
-    let ground = Box::new(
-        Sphere::new(
-            Vector::new(0.0, -1000.0, 0.0),
-            1000.0,
-            Box::new(Lambertian::new(Vector::new(0.5, 0.5, 0.5))),
-        )
-    );
-    let dialectic = Box::new(
-        Sphere::new(
-            Vector::new(0.0, 1.0, 0.0),
-            1.0,
-            Box::new(Dialectic::new(1.5)),
-        )
-    );
-    let lambertian = Box::new(
-        Sphere::new(
-            Vector::new(-4.0, 1.0, 0.0),
-            1.0,
-            Box::new(Lambertian::new(Vector::new(0.4, 0.2, 0.1))),
-        )
-    );
-    let metal = Box::new(
-        Sphere::new(
-            Vector::new(4.0, 1.0, 0.0),
-            1.0,
-            Box::new(Metal::new(Vector::new(0.7, 0.6, 0.5), 0.0)),
-        )
-    );
+    let ground = Box::new(Sphere::new(
+        Vector::new(0.0, -1000.0, 0.0),
+        1000.0,
+        Box::new(Lambertian::new(Vector::new(0.5, 0.5, 0.5))),
+    ));
+    let dialectic = Box::new(Sphere::new(
+        Vector::new(0.0, 1.0, 0.0),
+        1.0,
+        Box::new(Dialectic::new(1.5)),
+    ));
+    let lambertian = Box::new(Sphere::new(
+        Vector::new(-4.0, 1.0, 0.0),
+        1.0,
+        Box::new(Lambertian::new(Vector::new(0.4, 0.2, 0.1))),
+    ));
+    let metal = Box::new(Sphere::new(
+        Vector::new(4.0, 1.0, 0.0),
+        1.0,
+        Box::new(Metal::new(Vector::new(0.7, 0.6, 0.5), 0.0)),
+    ));
     objects.push(ground);
     objects.push(dialectic);
     objects.push(lambertian);
@@ -53,7 +45,11 @@ fn main() -> io::Result<()> {
     let mut rng = SmallRng::from_rng(thread_rng())?;
     for (i, e) in iproduct!(-ns..ns, -ns..ns) {
         let choose_mat = rng.gen::<f64>();
-        let center = Vector::new(i as f64 + 0.9 + rng.gen::<f64>(), 0.2, e as f64 + 0.9 * rng.gen::<f64>());
+        let center = Vector::new(
+            i as f64 + 0.9 + rng.gen::<f64>(),
+            0.2,
+            e as f64 + 0.9 * rng.gen::<f64>(),
+        );
         let material: Box<dyn Material> = if (center - Vector::new(4.0, 0.2, 0.0)).length() > 0.9 {
             Box::new(Lambertian::new(Vector::new(
                 rng.gen::<f64>() * rng.gen::<f64>(),
@@ -85,6 +81,11 @@ fn main() -> io::Result<()> {
     let world = World::new(objects);
 
     let scale = 300;
-    write_image(camera.render(&world, scale, &mut rng), aspect_ratio, scale, "example.png")?;
+    write_image(
+        camera.render(&world, scale, &mut rng).as_ref(),
+        aspect_ratio,
+        scale,
+        "example.png",
+    )?;
     Ok(())
 }

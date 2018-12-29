@@ -1,7 +1,7 @@
-use crate::vector::Vector;
+use crate::collision::{Collidable, Collision};
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::collision::{Collision, Collidable};
+use crate::vector::Vector;
 
 pub struct Sphere {
     center: Vector,
@@ -12,9 +12,9 @@ pub struct Sphere {
 impl Sphere {
     pub fn new(center: Vector, radius: f64, material: Box<dyn Material>) -> Sphere {
         Sphere {
-            center: center,
-            radius: radius,
-            material: material,
+            center,
+            radius,
+            material,
         }
     }
 }
@@ -33,13 +33,13 @@ impl Collidable for Sphere {
             if tmin < time && time < tmax {
                 let point = ray.point_at_parameter(time);
                 let normal = (point - self.center) / self.radius;
-                return Some(Collision::new(time, point, normal, &self.material));
+                return Some(Collision::new(time, point, normal, &*self.material));
             }
             let time = (-b + discriminant.sqrt()) / a;
             if tmin < time && time < tmax {
                 let point = ray.point_at_parameter(time);
                 let normal = (point - self.center) / self.radius;
-                return Some(Collision::new(time, point, normal, &self.material));
+                return Some(Collision::new(time, point, normal, &*self.material));
             }
         }
         None

@@ -1,17 +1,13 @@
+use crate::collision::{Collidable, Collision};
 use crate::ray::Ray;
-use crate::collision::{Collision, Collidable};
-
 
 pub struct World {
     collidable_objects: Vec<Box<dyn Collidable>>,
 }
 
-
 impl World {
     pub fn new(collidable_objects: Vec<Box<dyn Collidable>>) -> World {
-        World {
-            collidable_objects: collidable_objects,
-        }
+        World { collidable_objects }
     }
 
     pub fn check_collision(self: &Self, ray: Ray, tmin: f64, tmax: f64) -> Option<Collision> {
@@ -25,7 +21,7 @@ impl World {
                         } else {
                             Some(collision)
                         }
-                    },
+                    }
                     None => Some(collision),
                 };
             }

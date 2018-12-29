@@ -1,4 +1,4 @@
-use image::{RgbImage, ImageBuffer, Rgb};
+use image::{ImageBuffer, Rgb, RgbImage};
 use std::io;
 use std::path::Path;
 
@@ -11,12 +11,12 @@ impl From<&Color> for Rgb<u8> {
                 (color.red * 255.99) as u8,
                 (color.green * 255.99) as u8,
                 (color.blue * 255.99) as u8,
-            ]
+            ],
         }
     }
 }
 
-pub fn write_image(pixels: Vec<Color>, aspect: f64, scale: usize, filename: &str) -> io::Result<()> {
+pub fn write_image(pixels: &[Color], aspect: f64, scale: usize, filename: &str) -> io::Result<()> {
     let width = scale;
     let height = (scale as f64 / aspect) as usize;
 

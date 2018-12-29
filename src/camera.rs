@@ -1,13 +1,12 @@
-use std::f64;
 use itertools::iproduct;
-use rand::rngs::SmallRng;
 use rand::prelude::*;
+use rand::rngs::SmallRng;
+use std::f64;
 
 use crate::color::Color;
+use crate::ray::Ray;
 use crate::vector::Vector;
 use crate::world::World;
-use crate::ray::Ray;
-
 
 pub struct Camera {
     origin: Vector,
@@ -20,9 +19,15 @@ pub struct Camera {
     lens_radius: f64,
 }
 
-
 impl Camera {
-    pub fn new(origin: Vector, target: Vector, vup: Vector, fov: f64, aspect: f64, apurture: f64) -> Camera {
+    pub fn new(
+        origin: Vector,
+        target: Vector,
+        vup: Vector,
+        fov: f64,
+        aspect: f64,
+        apurture: f64,
+    ) -> Camera {
         let focus_dist = (origin - target).length();
         let lens_radius = apurture / 2.0;
         let theta = fov * f64::consts::PI / 180.0;
@@ -41,14 +46,14 @@ impl Camera {
         let horizontal = horizontal_part * 2.0;
         let vertical = vertical_part * 2.0;
         Camera {
-            origin: origin,
-            lower_left_corner: lower_left_corner,
-            horizontal: horizontal,
-            vertical: vertical,
-            u: u,
-            v: v,
-            aspect: aspect,
-            lens_radius: lens_radius,
+            origin,
+            lower_left_corner,
+            horizontal,
+            vertical,
+            u,
+            v,
+            aspect,
+            lens_radius,
         }
     }
 
@@ -57,10 +62,9 @@ impl Camera {
         let offset = self.u * random_disc.x + self.v * random_disc.y;
         Ray::new(
             self.origin + offset,
-            self.lower_left_corner +
-            (self.horizontal * s) +
-            (self.vertical * t) -
-            self.origin - offset,
+            self.lower_left_corner + (self.horizontal * s) + (self.vertical * t)
+                - self.origin
+                - offset,
         )
     }
 
@@ -96,12 +100,7 @@ fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color 
         if depth < 50 {
             match collision.material.scatter(ray, collision, rng) {
                 Some(effect) => {
-                    calc_color(
-                        world,
-                        effect.scatter,
-                        depth + 1,
-                        rng
-                    ) * effect.attenuation
+                    calc_color(world, effect.scatter, depth + 1, rng) * effect.attenuation
                 }
                 None => Color::default(),
             }
@@ -116,30 +115,22 @@ fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color 
 pub fn random_in_unit_sphere(rng: &mut SmallRng) -> Vector {
     let mut point;
     loop {
-        point = Vector::new(
-            rng.gen(),
-            rng.gen(),
-            rng.gen(),
-        ) * 1.5 - Vector::unit();
+        point = Vector::new(rng.gen(), rng.gen(), rng.gen()) * 1.5 - Vector::unit();
         if point.dot(point) >= 1.0 {
             break;
         }
-    };
+    }
     point
 }
 
 pub fn random_in_unit_disc(rng: &mut SmallRng) -> Vector {
     let mut point;
     loop {
-        point = Vector::new(
-            rng.gen(),
-            rng.gen(),
-            0.0,
-        ) * 2.0 - Vector::new(1.0, 1.0, 0.0);
+        point = Vector::new(rng.gen(), rng.gen(), 0.0) * 2.0 - Vector::new(1.0, 1.0, 0.0);
         if point.dot(point) >= 1.0 {
             break;
         }
-    };
+    }
     point
 }
 
