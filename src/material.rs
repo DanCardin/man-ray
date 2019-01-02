@@ -10,7 +10,7 @@ pub trait Material: Sync {
     fn name(&self) -> String;
     fn scatter(
         self: &Self,
-        ray: Ray,
+        ray: &Ray,
         collision: Collision,
         rng: &mut SmallRng,
     ) -> Option<MaterialEffect>;
@@ -59,13 +59,14 @@ impl Material for Lambertian {
     }
     fn scatter(
         self: &Self,
-        _ray: Ray,
+        ray: &Ray,
         collision: Collision,
         rng: &mut SmallRng,
     ) -> Option<MaterialEffect> {
-        let target = collision.point + collision.normal + random_in_unit_sphere(rng);
+        let point = ray.point_at_distance(collision.distance);
+        let target = point + collision.normal + random_in_unit_sphere(rng);
         Some(MaterialEffect {
-            scatter: Ray::new(collision.point, target - collision.point),
+            scatter: Ray::new(point, target - point),
             attenuation: self.albedo,
         })
     }
@@ -90,15 +91,13 @@ impl Material for Metal {
     }
     fn scatter(
         self: &Self,
-        ray: Ray,
+        ray: &Ray,
         collision: Collision,
         rng: &mut SmallRng,
     ) -> Option<MaterialEffect> {
         let reflected = reflect(ray.direction.to_unit(), collision.normal);
-        let scatter = Ray::new(
-            collision.point,
-            reflected + random_in_unit_sphere(rng) * self.fuzz,
-        );
+        let point = ray.point_at_distance(collision.distance);
+        let scatter = Ray::new(point, reflected + random_in_unit_sphere(rng) * self.fuzz);
         if scatter.direction.dot(collision.normal) > 0.0 {
             Some(MaterialEffect {
                 scatter,
@@ -127,7 +126,7 @@ impl Material for Dialectic {
     }
     fn scatter(
         self: &Self,
-        ray: Ray,
+        ray: &Ray,
         collision: Collision,
         rng: &mut SmallRng,
     ) -> Option<MaterialEffect> {
@@ -159,8 +158,10 @@ impl Material for Dialectic {
         if rng.gen::<f64>() > reflect_probability {
             scatter_direction = reflect(ray.direction, collision.normal);
         }
+
+        let point = ray.point_at_distance(collision.distance);
         Some(MaterialEffect {
-            scatter: Ray::new(collision.point, scatter_direction),
+            scatter: Ray::new(point, scatter_direction),
             attenuation: Vector::unit(),
         })
     }

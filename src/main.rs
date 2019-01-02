@@ -4,7 +4,7 @@ use itertools::iproduct;
 use man_ray::camera::Camera;
 use man_ray::image::write_image;
 use man_ray::material::{Dialectic, Lambertian, Metal};
-use man_ray::shape::Sphere;
+use man_ray::shapes::{plane::Plane, sphere::Sphere};
 use man_ray::vector::Vector;
 use man_ray::world::World;
 use rand::prelude::*;
@@ -14,35 +14,32 @@ use rand::thread_rng;
 fn main() -> io::Result<()> {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     let n = 10;
-    let scale = 1200;
+    let scale = 500;
 
     let mut world = World::new();
 
-    world.push_material("ground".into(), Lambertian::new(Vector::new(0.5, 0.5, 0.5)));
+    world.push_material("ground", Lambertian::new(Vector::new(0.5, 0.5, 0.5)));
     world.push_object(
-        "ground".into(),
-        Sphere::new_with_material(Vector::new(0.0, -1000.0, 0.0), 1000.0, "ground".into()),
+        "ground",
+        Plane::new(Vector::new(0.0, 0.0, 0.0), Vector::new(0.0, -1.0, 0.0)).with_material("ground"),
     );
 
-    world.push_material("dialectic".into(), Dialectic::new(1.5));
+    world.push_material("dialectic", Dialectic::new(1.5));
     world.push_object(
-        "dialectic".into(),
-        Sphere::new_with_material(Vector::new(0.0, 1.0, 0.0), 1.0, "dialectic".into()),
+        "dialectic",
+        Sphere::new(Vector::new(0.0, 1.0, 0.0), 1.0).with_material("dialectic"),
     );
 
-    world.push_material(
-        "lambertian".into(),
-        Lambertian::new(Vector::new(0.4, 0.2, 0.1)),
-    );
+    world.push_material("lambertian", Lambertian::new(Vector::new(0.4, 0.2, 0.1)));
     world.push_object(
-        "lambertian".into(),
-        Sphere::new_with_material(Vector::new(-4.0, 1.0, 0.0), 1.0, "lambertian".into()),
+        "lambertian",
+        Sphere::new(Vector::new(4.0, 1.0, 0.0), 1.0).with_material("lambertian"),
     );
 
-    world.push_material("metal".into(), Metal::new(Vector::new(0.7, 0.6, 0.5), 0.0));
+    world.push_material("metal", Metal::new(Vector::new(0.7, 0.6, 0.5), 0.0));
     world.push_object(
-        "metal".into(),
-        Sphere::new_with_material(Vector::new(4.0, 1.0, 0.0), 1.0, "metal".into()),
+        "metal",
+        Sphere::new(Vector::new(-4.0, 1.0, 0.0), 1.0).with_material("metal"),
     );
 
     for i in 0..50 {
@@ -83,7 +80,7 @@ fn main() -> io::Result<()> {
 
         world.push_object(
             format!("{},{}", i, e),
-            Sphere::new_with_material(center, 0.2, material_name),
+            Sphere::new(center, 0.2).with_material(material_name),
         );
     }
 

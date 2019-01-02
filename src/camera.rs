@@ -2,6 +2,7 @@ use itertools::iproduct;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use std::f64;
+use std::ops::Div;
 
 use crate::color::Color;
 use crate::ray::Ray;
@@ -74,41 +75,40 @@ impl Camera {
         let height = (scale as f64 / self.aspect) as usize;
         println!("{} {}", width, height);
 
-        let sub_pixels = 5;
+        let sub_pixels = 10;
 
         iproduct!(0..height, 0..width)
             .collect::<Vec<(usize, usize)>>()
             .par_iter()
             .map(|(i, e)| {
-                let i = *i;
-                let e = *e;
                 let mut rng = SmallRng::from_rng(thread_rng()).expect("couldn't get randomness");
-                let color: Color = (0..sub_pixels)
+                (0..sub_pixels)
                     .map(|_| {
                         let u_rand: f64 = rng.gen();
-                        let u = (e as f64 + u_rand) / width as f64;
+                        let u = (*e as f64 + u_rand) / width as f64;
 
                         let v_rand: f64 = rng.gen();
-                        let v = (((height as f64) - (i as f64)) + v_rand) / (height as f64);
+                        let v = (((height as f64) - (*i as f64)) + v_rand) / (height as f64);
                         let ray = self.get_ray(u, v, &mut rng);
-                        calc_color(world, ray, 0, &mut rng)
+                        calc_color(world, &ray, 0, &mut rng)
                     })
-                    .sum();
-                (color / sub_pixels).gamma_correct()
+                    .sum::<Color>()
+                    .div(sub_pixels)
+                    .gamma_correct()
             })
             .collect()
     }
 }
 
-fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color {
-    let collision = match world.check_collision(ray, 0.001, f64::MAX) {
+fn calc_color(world: &World, ray: &Ray, depth: i32, rng: &mut SmallRng) -> Color {
+    let collision = match world.check_collision(&ray, 0.001, f64::MAX) {
         Some(collision) => collision,
         None => return background(ray),
     };
 
     if depth < 50 {
         match collision.material.scatter(ray, collision, rng) {
-            Some(effect) => calc_color(world, effect.scatter, depth + 1, rng) * effect.attenuation,
+            Some(effect) => calc_color(world, &effect.scatter, depth + 1, rng) * effect.attenuation,
             None => Color::default(),
         }
     } else {
@@ -119,7 +119,7 @@ fn calc_color(world: &World, ray: Ray, depth: i32, rng: &mut SmallRng) -> Color 
 pub fn random_in_unit_sphere(rng: &mut SmallRng) -> Vector {
     let mut point;
     loop {
-        point = Vector::new(rng.gen(), rng.gen(), rng.gen()) * 1.5 - Vector::unit();
+        point = Vector::new(rng.gen(), rng.gen(), rng.gen()) * 2.0 - Vector::unit();
         if point.dot(point) >= 1.0 {
             break;
         }
@@ -138,7 +138,7 @@ pub fn random_in_unit_disc(rng: &mut SmallRng) -> Vector {
     point
 }
 
-fn background(ray: Ray) -> Color {
+fn background(ray: &Ray) -> Color {
     let unit_direction = ray.direction.to_unit();
     let t = 0.5 * unit_direction.y + 1.0;
     let vector = Vector::unit() * (1.0 - t) + Vector::new(0.5, 0.7, 1.0) * t;

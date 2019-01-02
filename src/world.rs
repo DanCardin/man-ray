@@ -16,30 +16,53 @@ impl World {
         }
     }
 
-    pub fn check_collision(self: &Self, ray: Ray, tmin: f64, tmax: f64) -> Option<Collision> {
-        let mut closest_collision: Option<Collision> = None;
-        for (_, collidable) in &self.objects {
-            if let Some(collision_data) = collidable.check_collision(ray, tmin, tmax) {
-                let (time, point, normal, material_name) = collision_data;
-                let collision =
-                    Collision::new(time, point, normal, self.get_material(material_name));
-                closest_collision = match closest_collision {
-                    Some(closest_collision) => {
-                        if closest_collision.time < collision.time {
-                            Some(closest_collision)
-                        } else {
-                            Some(collision)
-                        }
+    pub fn check_collision(
+        self: &Self,
+        ray: &Ray,
+        min_distance: f64,
+        max_distance: f64,
+    ) -> Option<Collision> {
+        let mut min_object_distance: Option<(&Box<dyn Collidable>, &str, f64)> = None;
+        for object in self.objects.values() {
+            let material_name = match object.get_material_name() {
+                Some(name) => name,
+                None => continue,
+            };
+
+            let potential_collision = object
+                .check_collision(&ray, min_distance, max_distance)
+                .filter(|distance| min_distance < *distance && *distance < max_distance);
+
+            let collision_distance = match potential_collision {
+                Some(distance) => distance,
+                None => continue,
+            };
+
+            min_object_distance = match min_object_distance {
+                None => Some((object, material_name, collision_distance)),
+                Some((pobject, pmaterial_name, pdistance)) => {
+                    if pdistance < collision_distance {
+                        Some((pobject, pmaterial_name, pdistance))
+                    } else {
+                        Some((object, material_name, collision_distance))
                     }
-                    None => Some(collision),
-                };
-            }
+                }
+            };
         }
-        closest_collision
+
+        let (object, material_name, distance) = match min_object_distance {
+            Some(data) => data,
+            None => return None,
+        };
+
+        let point = ray.point_at_distance(distance);
+        let normal = object.surface_normal(point);
+        let material = self.get_material(material_name);
+        Some(Collision::new(distance, normal, material))
     }
 
-    pub fn push_material<T: 'static + Material>(&mut self, name: String, material: T) {
-        self.materials.insert(name, Box::new(material));
+    pub fn push_material<T: 'static + Material, S: Into<String>>(&mut self, name: S, material: T) {
+        self.materials.insert(name.into(), Box::new(material));
     }
 
     pub fn get_material<S: AsRef<str>>(&self, name: S) -> &Material {
@@ -50,7 +73,11 @@ impl World {
         self.materials.keys().map(|i| i.to_string()).collect()
     }
 
-    pub fn push_object<T: 'static + Collidable>(&mut self, name: String, object: T) {
-        self.objects.insert(name, Box::new(object));
+    pub fn push_object<T, S>(&mut self, name: S, object: T)
+    where
+        S: Into<String>,
+        T: 'static + Collidable,
+    {
+        self.objects.insert(name.into(), Box::new(object));
     }
 }
