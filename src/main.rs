@@ -14,7 +14,7 @@ use rand::thread_rng;
 fn main() -> io::Result<()> {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     let n = 10;
-    let scale = 500;
+    let scale = 1200;
 
     let mut world = World::new();
 

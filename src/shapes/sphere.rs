@@ -35,9 +35,9 @@ impl Collidable for Sphere {
     ) -> Option<f64> {
         let to_sphere_center = ray.origin - self.center;
 
-        let a = ray.direction.dot(ray.direction);
-        let b = to_sphere_center.dot(ray.direction);
-        let c = to_sphere_center.dot(to_sphere_center) - self.radius.powi(2);
+        let a = ray.direction.dot(&ray.direction);
+        let b = to_sphere_center.dot(&ray.direction);
+        let c = to_sphere_center.dot(&to_sphere_center) - self.radius.powi(2);
 
         let discriminant = b * b - a * c;
 
@@ -54,8 +54,8 @@ impl Collidable for Sphere {
         None
     }
 
-    fn surface_normal(self: &Self, collision_point: Vector) -> Vector {
-        (collision_point - self.center).to_unit()
+    fn surface_normal(self: &Self, collision_point: &Vector) -> Vector {
+        (*collision_point - self.center).to_unit()
     }
 
     fn get_material_name(self: &Self) -> Option<&str> {

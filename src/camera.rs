@@ -37,8 +37,8 @@ impl Camera {
         let half_width = aspect * half_height;
 
         let w = (origin - target).to_unit();
-        let u = vup.cross(w).to_unit();
-        let v = w.cross(u);
+        let u = vup.cross(&w).to_unit();
+        let v = w.cross(&u);
 
         let horizontal_part = u * half_width * focus_dist;
         let vertical_part = v * half_height * focus_dist;
@@ -75,7 +75,7 @@ impl Camera {
         let height = (scale as f64 / self.aspect) as usize;
         println!("{} {}", width, height);
 
-        let sub_pixels = 10;
+        let sub_pixels = 100;
 
         iproduct!(0..height, 0..width)
             .collect::<Vec<(usize, usize)>>()
@@ -120,7 +120,7 @@ pub fn random_in_unit_sphere(rng: &mut SmallRng) -> Vector {
     let mut point;
     loop {
         point = Vector::new(rng.gen(), rng.gen(), rng.gen()) * 2.0 - Vector::unit();
-        if point.dot(point) >= 1.0 {
+        if point.dot(&point) >= 1.0 {
             break;
         }
     }
@@ -131,7 +131,7 @@ pub fn random_in_unit_disc(rng: &mut SmallRng) -> Vector {
     let mut point;
     loop {
         point = Vector::new(rng.gen(), rng.gen(), 0.0) * 2.0 - Vector::new(1.0, 1.0, 0.0);
-        if point.dot(point) >= 1.0 {
+        if point.dot(&point) >= 1.0 {
             break;
         }
     }

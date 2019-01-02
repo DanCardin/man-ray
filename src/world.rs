@@ -56,7 +56,7 @@ impl World {
         };
 
         let point = ray.point_at_distance(distance);
-        let normal = object.surface_normal(point);
+        let normal = object.surface_normal(&point);
         let material = self.get_material(material_name);
         Some(Collision::new(distance, normal, material))
     }

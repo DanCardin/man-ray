@@ -36,11 +36,11 @@ impl Vector {
         self.squared_length().sqrt()
     }
 
-    pub fn dot(self: &Self, other: Self) -> f64 {
+    pub fn dot(self: &Self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn cross(self: &Self, other: Self) -> Vector {
+    pub fn cross(self: &Self, other: &Self) -> Vector {
         Vector {
             x: self.y * other.z - self.z * other.y,
             y: -1.0 * (self.x * other.z - self.z * other.x),

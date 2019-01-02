@@ -22,16 +22,16 @@ pub struct MaterialEffect {
     pub attenuation: Vector,
 }
 
-fn reflect(light: Vector, normal: Vector) -> Vector {
-    light - (normal * light.dot(normal) * 2.0)
+fn reflect(light: &Vector, normal: &Vector) -> Vector {
+    *light - (*normal * light.dot(normal) * 2.0)
 }
 
-fn refract(light: Vector, normal: Vector, refraction_index: f64) -> Option<Vector> {
+fn refract(light: &Vector, normal: &Vector, refraction_index: f64) -> Option<Vector> {
     let uv = light.to_unit();
     let dt = uv.dot(normal);
     let discriminant = 1.0 - refraction_index.powi(2) * (1.0 - dt.powi(2));
     if discriminant > 0.0 {
-        return Some(((light - normal * dt) * refraction_index) - normal * discriminant.sqrt());
+        return Some(((*light - *normal * dt) * refraction_index) - *normal * discriminant.sqrt());
     }
     None
 }
@@ -95,10 +95,10 @@ impl Material for Metal {
         collision: Collision,
         rng: &mut SmallRng,
     ) -> Option<MaterialEffect> {
-        let reflected = reflect(ray.direction.to_unit(), collision.normal);
+        let reflected = reflect(&ray.direction.to_unit(), &collision.normal);
         let point = ray.point_at_distance(collision.distance);
         let scatter = Ray::new(point, reflected + random_in_unit_sphere(rng) * self.fuzz);
-        if scatter.direction.dot(collision.normal) > 0.0 {
+        if scatter.direction.dot(&collision.normal) > 0.0 {
             Some(MaterialEffect {
                 scatter,
                 attenuation: self.albedo,
@@ -136,27 +136,27 @@ impl Material for Dialectic {
         let reflect_probability;
         let mut scatter_direction;
 
-        if ray.direction.dot(collision.normal) > 0.0 {
+        if ray.direction.dot(&collision.normal) > 0.0 {
             outward_normal = collision.normal * -1.0;
             refraction_index = self.refraction_index;
             cosine =
-                refraction_index * ray.direction.dot(collision.normal) / ray.direction.length();
+                refraction_index * ray.direction.dot(&collision.normal) / ray.direction.length();
         } else {
             outward_normal = collision.normal;
             refraction_index = 1.0 / self.refraction_index;
-            cosine = ray.direction.dot(collision.normal) / ray.direction.length() * -1.0;
+            cosine = ray.direction.dot(&collision.normal) / ray.direction.length() * -1.0;
         }
 
-        if let Some(refraction) = refract(ray.direction, outward_normal, refraction_index) {
+        if let Some(refraction) = refract(&ray.direction, &outward_normal, refraction_index) {
             reflect_probability = schlick(cosine, refraction_index);
             scatter_direction = refraction;
         } else {
             reflect_probability = 1.0;
-            scatter_direction = reflect(ray.direction, collision.normal);
+            scatter_direction = reflect(&ray.direction, &collision.normal);
         }
 
         if rng.gen::<f64>() > reflect_probability {
-            scatter_direction = reflect(ray.direction, collision.normal);
+            scatter_direction = reflect(&ray.direction, &collision.normal);
         }
 
         let point = ray.point_at_distance(collision.distance);

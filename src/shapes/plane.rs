@@ -33,10 +33,10 @@ impl Collidable for Plane {
         min_distance: f64,
         max_distance: f64,
     ) -> Option<f64> {
-        let denom = self.normal.dot(ray.direction);
+        let denom = self.normal.dot(&ray.direction);
 
         let v = self.point - ray.origin;
-        let distance = v.dot(self.normal) / denom;
+        let distance = v.dot(&self.normal) / denom;
 
         if min_distance < distance && distance < max_distance {
             return Some(distance);
@@ -44,7 +44,7 @@ impl Collidable for Plane {
         None
     }
 
-    fn surface_normal(self: &Self, _collision_point: Vector) -> Vector {
+    fn surface_normal(self: &Self, _collision_point: &Vector) -> Vector {
         self.normal * -1.0
     }
 
