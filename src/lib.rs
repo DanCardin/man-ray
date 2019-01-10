@@ -6,4 +6,5 @@ pub mod material;
 pub mod ray;
 pub mod shapes;
 pub mod vector;
+pub mod window;
 pub mod world;

@@ -1,21 +1,17 @@
-use std::io;
-
+use ggez::GameResult;
 use itertools::iproduct;
 use man_ray::camera::Camera;
-use man_ray::image::write_image;
 use man_ray::material::{Dialectic, Lambertian, Metal};
 use man_ray::shapes::{plane::Plane, sphere::Sphere};
 use man_ray::vector::Vector;
+use man_ray::window::Window;
 use man_ray::world::World;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use rand::thread_rng;
 
-fn main() -> io::Result<()> {
+fn create_world(n: usize) -> World {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-    let n = 10;
-    let scale = 1200;
-
     let mut world = World::new();
 
     world.push_material("ground", Lambertian::new(Vector::new(0.5, 0.5, 0.5)));
@@ -83,20 +79,15 @@ fn main() -> io::Result<()> {
             Sphere::new(center, 0.2).with_material(material_name),
         );
     }
+    world
+}
 
-    let origin = Vector::new(8.0, 2.0, 3.0);
-    let target = Vector::new(0.0, 1.0, 0.0);
-    let vup = Vector::new(0.0, 1.0, 0.0);
-    let field_of_view = 33.0;
-    let aspect_ratio = 4.0 / 3.0;
-    let apurture = 0.0;
-    let camera = Camera::new(origin, target, vup, field_of_view, aspect_ratio, apurture);
+fn main() -> GameResult<()> {
+    let world = create_world(10);
+    let camera = Camera::default()
+        .with_origin(Vector::new(8.0, 2.0, 3.0))
+        .with_target(Vector::new(0.0, 1.0, 0.0))
+        .with_scale(600);
 
-    write_image(
-        camera.render(&world, scale).as_ref(),
-        aspect_ratio,
-        scale,
-        "example.png",
-    )?;
-    Ok(())
+    Window::new(world, camera).run()
 }

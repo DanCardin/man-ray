@@ -4,11 +4,32 @@ version = "0.1.0"
 authors = ["Dan Cardin <ddcardin@gmail.com>"]
 edition = "2018"
 
+[features]
+metal = []
+vulkan = []
+
 [dependencies]
 itertools = ">=0.8"
 image = ">=0.20"
 rand = ">=0.6.1"
 rayon = ">=1.0"
+winit = "0.18"
+# piston =  "*"
+# piston_window =  "*"
+# gfx_device_gl = "0.15.0"
+# gfx = "0.17.1"
+mint = "*"
+ggez = { git = 'https://github.com/ggez/ggez.git', branch = 'devel' }
+# draw_state = "0.8.0"
+# piston-shaders_graphics2d = "0.3.1"
+# pistoncore-event_loop = "*"
+# pistoncore-input = "*"
+# piston-gfx_texture = "0.34.0"
+# piston2d-gfx_graphics = "*"
+# pistoncore-glutin_window = "*"
+# piston2d-graphics = "*"
+# piston2d-opengl_graphics = "*"
+# pistoncore-window = "*"
 
 [dev-dependencies]
 criterion = ">=0.2.7"
@@ -16,3 +37,7 @@ criterion = ">=0.2.7"
 [[bench]]
 name = "big_scene"
 harness = false
+
+[profile.release]
+debug = true
+lto = false
