@@ -11,7 +11,7 @@ impl Ray {
         Ray { origin, direction }
     }
 
-    pub fn point_at_parameter(self: &Self, t: f64) -> Vector {
-        self.origin + self.direction * t
+    pub fn point_at_distance(self: &Self, distance: f64) -> Vector {
+        self.origin + self.direction * distance
     }
 }

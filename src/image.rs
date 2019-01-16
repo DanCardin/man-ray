@@ -1,4 +1,4 @@
-use image::{ImageBuffer, Rgb, RgbImage};
+use image::{ImageBuffer, Rgb, RgbImage, Rgba};
 use std::io;
 use std::path::Path;
 
@@ -11,6 +11,19 @@ impl From<&Color> for Rgb<u8> {
                 (color.red * 255.99) as u8,
                 (color.green * 255.99) as u8,
                 (color.blue * 255.99) as u8,
+            ],
+        }
+    }
+}
+
+impl From<&Color> for Rgba<u8> {
+    fn from(color: &Color) -> Self {
+        Self {
+            data: [
+                (color.red * 255.99) as u8,
+                (color.green * 255.99) as u8,
+                (color.blue * 255.99) as u8,
+                255,
             ],
         }
     }

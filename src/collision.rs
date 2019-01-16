@@ -1,23 +1,25 @@
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vector::Vector;
+use std::marker::Sync;
 
-pub trait Collidable {
-    fn check_collision(self: &Self, ray: Ray, tmix: f64, tmax: f64) -> Option<Collision>;
+pub trait Collidable: Sync {
+    fn check_collision(self: &Self, ray: &Ray, min_distance: f64, max_distance: f64)
+        -> Option<f64>;
+    fn surface_normal(self: &Self, collision_point: &Vector) -> Vector;
+    fn get_material_name(self: &Self) -> Option<&str>;
 }
 
 pub struct Collision<'a> {
-    pub time: f64,
-    pub point: Vector,
+    pub distance: f64,
     pub normal: Vector,
     pub material: &'a dyn Material,
 }
 
 impl<'a> Collision<'a> {
-    pub fn new(time: f64, point: Vector, normal: Vector, material: &'a dyn Material) -> Collision {
+    pub fn new(distance: f64, normal: Vector, material: &'a dyn Material) -> Collision {
         Collision {
-            time,
-            point,
+            distance,
             normal,
             material,
         }
